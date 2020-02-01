@@ -26,8 +26,16 @@ app.get("/", (req, res) => {
   res.render("index", { name: "홍길동" });
 });
 
+// ":" Path Variable : URI에서 변수 값을 가져오는 것
 app.get("/test/:email", (req, res) => {
+  console.log(req.params);
+  console.log(typeof req.params);
+  // params: 패스 변수의 인자가 저장된 객체
   testJson.email = req.params.email; // cf. req.body, req.query
+  // query string: URI의 ?이하 부분 [?변수이름=값]
+  testJson.aa = req.query.aa;
+  console.group(testJson.aa);
+  // URI가 /test/aaa@ddd.com?aa=123 일 때 123이 출력됨
   res.json(testJson);
 });
 
