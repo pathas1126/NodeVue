@@ -35,7 +35,7 @@ module.exports = class {
     // this.pool.getConnectionAsync() : 커넥션을 하나 꺼내옴
     // 커넥션을 사용하는 프로세스가 종료되면 disposer() 실행
     return this.pool.getConnectionAsync().disposer(conn => {
-      // 커넥션을 재사용해야하기 때문에 release 즉, 쉬게 만들어 줌
+      // 커넥션을 재사용해야하기 때문에 release 즉, 쉬게 만들어 줌, close하면 안 됨
       return conn.release();
     });
   }

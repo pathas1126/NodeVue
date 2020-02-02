@@ -1,9 +1,15 @@
 // express 웹 서버를 가져 옴
-const express = require("express");
-// app : express 초기화
-const app = express(),
-  // test 폴더의 test.json 파일 경로를 변수에 저장
-  testJson = require("./test/test.json");
+const express = require("express"),
+  // app : express 초기화
+  app = express();
+
+const Pool = require("./pool"),
+  Mydb = require("./mydb");
+// test 폴더의 test.json 파일 경로를 변수에 저장
+const testJson = require("./test/test.json");
+
+// 웹 서버가 실행될 때 pool이 한 번만 생성되도록 함
+const pool = new Pool();
 
 // ====== static 설정 ======
 // public 폴더를 static 폴더로 지정함
@@ -28,15 +34,24 @@ app.get("/", (req, res) => {
 
 // ":" Path Variable : URI에서 변수 값을 가져오는 것
 app.get("/test/:email", (req, res) => {
-  console.log(req.params);
-  console.log(typeof req.params);
   // params: 패스 변수의 인자가 저장된 객체
   testJson.email = req.params.email; // cf. req.body, req.query
   // query string: URI의 ?이하 부분 [?변수이름=값]
   testJson.aa = req.query.aa;
-  console.group(testJson.aa);
+
   // URI가 /test/aaa@ddd.com?aa=123 일 때 123이 출력됨
-  res.json(testJson);
+  res.json(testJson.aa);
+});
+
+app.get("/dbtest/:user", (req, res) => {
+  let user = req.params.user;
+  let mydb = new Mydb(pool);
+  // mydb 모듈의 execute 함수 실행
+  mydb.execute(conn => {
+    conn.query("select * from User where uid=?", [user], (err, ret) => {
+      res.json(ret);
+    });
+  });
 });
 
 // express 실행(run)
