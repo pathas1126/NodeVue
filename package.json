@@ -28,6 +28,7 @@
     "express": "^4.17.1",
     "hashmap": "^2.4.0",
     "mysql": "^2.18.1",
-    "open-graph-scraper": "^3.6.2"
+    "open-graph-scraper": "^3.6.2",
+    "socket.io": "^2.3.0"
   }
 }
