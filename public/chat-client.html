@@ -1,0 +1,146 @@
+<!-- ================ socket.io 클라이언트 측 ================ -->
+
+<!-- index.js에서 express로 public 폴더를 static폴더로 지정했기 때문에
+localhost:7000/chat-client.html 에서 html 파일이 출력되는 것을 볼 수 있음-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>CharClient</title>
+    <style>
+      .red {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>
+      Chat Client
+      <!-- socket.io 내 id 출력 -->
+      <strong id="myid" class="red"></strong>
+    </h1>
+
+    <!-- socket.io 내가 속한 방 출력 -->
+    <div id="rooms"></div>
+
+    <!-- 버튼 클릭시 채팅방에 접속하도록 함 -->
+    <div>
+      <input type="text" id="roomid" value="" />
+      <button onclick="joinRoom()">Join</button>
+    </div>
+
+    <hr />
+
+    <!-- socket.io square 방에 연결되었는지 확인 -->
+    <div id="status" class="red"></div>
+
+    <!-- 메세지가 출력될 div -->
+    <div id="list"></div>
+
+    <div>
+      <input type="text" id="msg" value="hi" />
+      <button onclick="send()" id="btnSend">Send</button>
+    </div>
+
+    <!-- 귓속말 출력 -->
+    <div>
+      <input type="text" id="socketid" value="hi" />
+      <button onclick="sendOne()">귓속말</button>
+    </div>
+
+    <!-- JQuery -->
+    <script
+      src="http://code.jquery.com/jquery-3.4.1.min.js"
+      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+      crossorigin="anonymous"
+    ></script>
+    <!-- socket.io가 기본적으로 제공, 클라이언트를 연결하기 위한 것 -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var square = "square";
+      // 현재 접속된 방 아이디 변수, null 이외의 값으로 초기화시 join하면 초기 방을 나와버림
+      var joinedRoom = null;
+      // express로 생성한 서버 포트를 그대로 받음, 별도의 소켓 서버를 설정하지 않았기 때문에
+      var socket = io("http://localhost:7000?aaa=123");
+
+      // 연결이 되었을 때
+      socket.on("connect", function() {
+        console.log("connected");
+        // 연결이 되었을 때 square에 자동으로 들어가도록 함
+        makeJoin(square);
+
+        $("#status").text("Connected : " + joinedRoom);
+
+        displayRooms();
+      });
+
+      // 클라이언트에게 전송한 메세지 출력(사용자가 수신한)
+      socket.on("message", function(data) {
+        console.log("message>>", data);
+        let msg = data.msg;
+
+        $("#list").append(`<div><strong>${msg}</strong></div>`);
+
+        // Welcome!! + id에서 id 값만 추출한 다음 화면에 출력
+        if (msg && msg.startsWith("Welcome!! ")) {
+          let myid = msg.substring(msg.lastIndexOf(" ") + 1);
+          $("#myid").text(myid);
+        }
+      });
+      // 연결이 끊겼을 때 호출하는 함수
+      socket.on("disconnect", function() {
+        console.log("disconnected!!");
+        $("#status").text("Disconnected!!");
+      });
+
+      // 클라이언트에서 서버로 메세지를 전송하는 것(사용자 -> 서버)
+      function send() {
+        let msg = $("#msg").val();
+        socket.emit("message", { room: joinedRoom, msg: msg }, function(ret) {
+          console.log("message.callback>>", ret);
+          $("#list").append(`<div>나: ${msg}</div>`);
+        });
+      }
+
+      // 버튼을 눌렀을 때 채팅방에 접속하도록 하는 이벤트리스너
+      function joinRoom() {
+        let roomid = $("input#roomid").val();
+        if (!roomid) {
+          alert("Input the room-id to join");
+          return;
+        }
+        makeJoin(roomid);
+      }
+
+      // 채팅방에 접속하도록 하는 함수
+      function makeJoin(roomid) {
+        // 확실하게 join에 성공했을 때 joinedRoom 변수에 roomid를 담는 처리를 실행하는 것
+        socket.emit("join", roomid, () => {
+          // 방을 이동할 때 자동으로 이전 방에서 나오도록 함
+          socket.emit("leave", joinedRoom); // A 방
+          joinedRoom = roomid; // B 방
+          $("#status").text("Joined : " + joinedRoom);
+          displayRooms();
+        });
+      }
+
+      // 현재 접속된 방을 출력하는 함수
+      function displayRooms() {
+        socket.emit("rooms", function(rooms) {
+          console.log("rooms>>>", rooms);
+          $("#rooms").text(rooms);
+        });
+      }
+
+      // 귓속말을 보내는 함수(한 명에게만 메세지를 전달하는 함수)
+      function sendOne() {
+        let socketid = $("#socketid").val();
+        if (!socketid) return alert("Input the socketid!!");
+
+        socket.emit("message-for-one", socketid, "귓속말: " + $("#msg").val());
+      }
+    </script>
+  </body>
+</html>
