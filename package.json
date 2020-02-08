@@ -30,6 +30,7 @@
     "mysql": "^2.18.1",
     "open-graph-scraper": "^3.6.2",
     "socket.io": "^2.3.0",
+    "uws": "^100.0.1",
     "webpack-node-externals": "^1.7.2"
   }
 }
